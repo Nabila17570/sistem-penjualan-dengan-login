@@ -76,7 +76,7 @@ for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
             <thead>
                 <tr>
                     <th>No.</th>
-                    <th>Kode</th>
+                    <th>Kode Barang</th>
                     <th>Nama Barang</th>
                     <th class="text-right">Harga (Rp)</th>
                     <th class="text-right">Jumlah</th>
