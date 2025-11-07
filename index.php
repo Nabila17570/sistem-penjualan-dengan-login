@@ -18,7 +18,7 @@ if (isset($_POST['login'])) {
     $password = $_POST['password'] ?? '';
 
     // Commit 2: Gunakan data login statis
-    $valid_username = 'admin';
+    $valid_username = 'nabila';
     $valid_password = '1234'; // Password statis
 
     if ($username === $valid_username && $password === $valid_password) {
