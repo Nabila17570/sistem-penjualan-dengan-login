@@ -27,6 +27,9 @@ if (isset($_POST['login'])) {
         $_SESSION['status'] = 'login';
         header("location: dashboard.php");
         exit;
+        // Mengambil role dari sesi. Role ini diasumsikan sudah disimpan 
+// di index.php sebagai $_SESSION['role'] = "Dosen";
+$role = isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : "Pengguna"; 
     } else {
         // Commit 3: Jika salah, tampilkan pesan error di halaman login.
         $pesan_error = 'Username atau password salah!'; // Sesuai dengan Tampilan index.php ketika username/password salah

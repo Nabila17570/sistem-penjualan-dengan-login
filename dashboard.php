@@ -8,6 +8,11 @@ if (!isset($_SESSION['status']) || $_SESSION['status'] != 'login') {
     exit;
 }
 
+// Ambil data dari sesi, termasuk role (ASUMSI role disimpan saat login)
+$username = htmlspecialchars($_SESSION['username'] ?? 'Pengguna');
+$role = htmlspecialchars($_SESSION['role'] ?? 'Dosen'); // Default jika role tidak ada
+// Note: Anda harus pastikan di index.php sudah ada $_SESSION['role'] = 'Dosen';
+
 // Commit 5: Buat 5 produk menggunakan array
 $products = [
     ['kode' => 'K001', 'nama' => 'Teh Pucuk', 'harga' => 5000],
@@ -18,24 +23,23 @@ $products = [
 ];
 
 // Commit 6: Tambahkan array dan variabel
-$pembelian = []; // Array untuk menyimpan detail pembelian acak
+$beli = []; // Array untuk menyimpan detail pembelian acak
 $grandtotal = 0;
 
 // Commit 6: Gunakan perulangan for untuk memilih barang dan jumlah pembelian secara acak.
-// Asumsi memilih 5 hingga 10 item acak
 $jumlah_transaksi_acak = rand(5, 10); 
 $product_keys = array_keys($products);
 
 for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
     $random_product_key = $product_keys[array_rand($product_keys)]; // Pilih produk acak
     $barang = $products[$random_product_key];
-    $jumlah_beli = rand(1, 5); // Jumlah pembelian acak antara 1 dan 5
+    $jumlah = rand(1, 5); // Jumlah pembelian acak antara 1 dan 5
 
-    $pembelian[] = [
+    $beli[] = [
         'kode' => $barang['kode'],
         'nama' => $barang['nama'],
         'harga' => $barang['harga'],
-        'jumlah' => $jumlah_beli,
+        'jumlah' => $jumlah,
     ];
 }
 ?>
@@ -47,6 +51,15 @@ for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POLGAN MART - Dashboard</title>
     <style>
+        /* Tambahkan CSS untuk styling role text */
+        .role-text {
+            font-size: 0.9em;
+            color: #6c757d; /* Warna abu-abu */
+            margin: 0;
+            margin-bottom: 5px; /* Jarak dengan tombol logout */
+        }
+
+        /* Styling yang sudah ada */
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
         .header { background: #007bff; color: white; padding: 10px 20px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
@@ -58,13 +71,21 @@ for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
         .logout-btn { padding: 8px 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
         .welcome { font-size: 1.1em; font-weight: bold; }
         .text-right { text-align: right; }
+        
+        /* Penyesuaian agar welcome dan role bisa ditampilkan di atas tombol logout */
+        .user-info-group { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; /* Ratakan konten ke kanan */
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>--POLGAN MART--</h1> 
-        <div>
-            <span class="welcome">Selamat datang, <?php echo htmlspecialchars($_SESSION['username']); ?>!</span> 
+        <div class="user-info-group">
+            <span class="welcome">Selamat datang, <?php echo $username; ?>!</span> 
+            <p class="role-text">Role: <?php echo $role; ?></p>
             <a href="logout.php" class="logout-btn">Logout</a> 
         </div>
     </div>
@@ -86,12 +107,9 @@ for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
             <tbody>
                 <?php
                 $no = 1;
-                // Commit 7: Gunakan foreach untuk menampilkan detail pembelian.
-                foreach ($pembelian as $item) {
-                    // Commit 7: Hitung total harga per item
-                    $total_item = $item['harga'] * $item['jumlah'];
-                    // Commit 7: akumulasikan ke variabel $grandtotal.
-                    $grandtotal += $total_item;
+                foreach ($beli as $item) {
+                    $total = $item['harga'] * $item['jumlah'];
+                    $grandtotal += $total;
                     ?>
                     <tr>
                         <td><?php echo $no++; ?></td>
@@ -99,7 +117,7 @@ for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
                         <td><?php echo htmlspecialchars($item['nama']); ?></td>
                         <td class="text-right"><?php echo number_format($item['harga'], 0, ',', '.'); ?></td>
                         <td class="text-right"><?php echo htmlspecialchars($item['jumlah']); ?></td>
-                        <td class="text-right"><?php echo number_format($total_item, 0, ',', '.'); ?></td>
+                        <td class="text-right"><?php echo number_format($total, 0, ',', '.'); ?></td>
                     </tr>
                     <?php
                 }
