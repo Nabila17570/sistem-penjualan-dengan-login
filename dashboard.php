@@ -1,134 +1,185 @@
 <?php
-// Commit 3: Proses Session
 session_start();
 
-// Cek apakah user belum login, jika ya, arahkan kembali ke index.php
-if (!isset($_SESSION['status']) || $_SESSION['status'] != 'login') {
-    header("location: index.php");
+// --- DATA BARANG ---
+$data_barang = [
+    "BRG001" => ["nama" => "Sabun Mandi", "harga" => 15000],
+    "BRG002" => ["nama" => "Sikat Gigi", "harga" => 20000],
+    "BRG003" => ["nama" => "Pasta Gigi", "harga" => 10000],
+    "BRG004" => ["nama" => "Shampo", "harga" => 20000],
+    "BRG005" => ["nama" => "Handuk", "harga" => 25000],
+];
+
+// Jika belum ada keranjang
+if (!isset($_SESSION['keranjang'])) {
+    $_SESSION['keranjang'] = [];
+}
+
+// --- Ambil kode barang yang dipilih ---
+$pilih_kode = $_POST['kode'] ?? "";
+$nama_otomatis = $pilih_kode && isset($data_barang[$pilih_kode]) ? $data_barang[$pilih_kode]['nama'] : "";
+$harga_otomatis = $pilih_kode && isset($data_barang[$pilih_kode]) ? $data_barang[$pilih_kode]['harga'] : "";
+
+// Proses tambah barang
+if (isset($_POST['tambah'])) {
+    $kode = $_POST['kode'];
+    $nama = $_POST['nama'];
+    $harga = $_POST['harga'];
+    $jumlah = $_POST['jumlah'];
+
+    $total = $harga * $jumlah;
+
+    $_SESSION['keranjang'][] = [
+        'kode' => $kode,
+        'nama' => $nama,
+        'harga' => $harga,
+        'jumlah' => $jumlah,
+        'total' => $total
+    ];
+}
+
+// Proses kosongkan keranjang
+if (isset($_GET['clear'])) {
+    $_SESSION['keranjang'] = [];
+    header("Location: dashboard.php");
     exit;
 }
 
-// Ambil data dari sesi, termasuk role (ASUMSI role disimpan saat login)
-$username = htmlspecialchars($_SESSION['username'] ?? 'Pengguna');
-$role = htmlspecialchars($_SESSION['role'] ?? 'Dosen'); // Default jika role tidak ada
-// Note: Anda harus pastikan di index.php sudah ada $_SESSION['role'] = 'Dosen';
+$username = $_SESSION['username'] ?? 'admin';
+$role = $_SESSION['role'] ?? 'Dosen';
 
-// Commit 5: Buat 5 produk menggunakan array
-$products = [
-    ['kode' => 'K001', 'nama' => 'Teh Pucuk', 'harga' => 5000],
-    ['kode' => 'K002', 'nama' => 'Sukro', 'harga' => 1000],
-    ['kode' => 'K003', 'nama' => 'Sprite', 'harga' => 4000],
-    ['kode' => 'K004', 'nama' => 'Coca-Cola', 'harga' => 5000],
-    ['kode' => 'K005', 'nama' => 'Chitose', 'harga' => 3000],
-];
-
-// Commit 6: Tambahkan array dan variabel
-$beli = []; // Array untuk menyimpan detail pembelian acak
-$grandtotal = 0;
-
-// Commit 6: Gunakan perulangan for untuk memilih barang dan jumlah pembelian secara acak.
-$jumlah_transaksi_acak = rand(5, 10); 
-$product_keys = array_keys($products);
-
-for ($i = 0; $i < $jumlah_transaksi_acak; $i++) {
-    $random_product_key = $product_keys[array_rand($product_keys)]; // Pilih produk acak
-    $barang = $products[$random_product_key];
-    $jumlah = rand(1, 5); // Jumlah pembelian acak antara 1 dan 5
-
-    $beli[] = [
-        'kode' => $barang['kode'],
-        'nama' => $barang['nama'],
-        'harga' => $barang['harga'],
-        'jumlah' => $jumlah,
-    ];
-}
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POLGAN MART - Dashboard</title>
-    <style>
-        /* Tambahkan CSS untuk styling role text */
-        .role-text {
-            font-size: 0.9em;
-            color: #f4f4f4; /* Warna abu-abu */
-            margin: 0;
-            margin-bottom: 5px; /* Jarak dengan tombol logout */
-        }
 
-        /* Styling yang sudah ada */
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-        .header { background: #007bff; color: white; padding: 10px 20px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-        h3 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .total-row td { font-weight: bold; background-color: #e9ecef; }
-        .logout-btn { padding: 8px 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
-        .welcome { font-size: 1.1em; font-weight: bold; }
-        .text-right { text-align: right; }
-        
-        /* Penyesuaian agar welcome dan role bisa ditampilkan di atas tombol logout */
-        .user-info-group { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: flex-end; /* Ratakan konten ke kanan */
-        }
+    <style>
+        body { font-family: Arial; background:#f4f6f9; margin:0; padding:0; }
+        .header { background:#fff; padding:20px; display:flex; justify-content:space-between; border-bottom:1px solid #ddd; }
+        .logo-box { display:flex; align-items:center; gap:15px; }
+        .logo { width:50px; height:50px; background:#2F80ED; color:white; font-size:22px; font-weight:bold; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+        .title { font-size:22px; font-weight:bold; }
+        .container { width:87%; margin:20px auto; background:#fff; padding:25px; border-radius:12px; }
+        input, select { width:100%; padding:10px; margin-bottom:12px; border-radius:6px; border:1px solid #ccc; }
+        .btn-primary { padding:10px 18px; background:#2F80ED; color:white; border-radius:8px; border:none; cursor:pointer; }
+        .btn-secondary { padding:10px 18px; background:#e0e0e0; border-radius:8px; border:none; cursor:pointer; }
+        .btn-danger { margin-top:20px; padding:10px 20px; background:#c53030; color:white; border-radius:8px; text-decoration:none; display:inline-block; }
+        table { width:100%; margin-top:25px; border-collapse:collapse; }
+        th, td { border-bottom:1px solid #eee; padding:10px; }
+        .text-right { text-align:right; }
+        .total-row td { font-weight:bold; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>--POLGAN MART--</h1> 
-        <div class="user-info-group">
-            <span class="welcome">Selamat datang, <?php echo $username; ?>!</span> 
-            <p class="role-text">Role: <?php echo $role; ?></p>
-            <a href="logout.php" class="logout-btn">Logout</a> 
+
+<div class="header">
+    <div class="logo-box">
+        <div class="logo">PM</div>
+        <div>
+            <div class="title">--POLGAN MART--</div>
+            <div class="subtitle">Sistem Penjualan Sederhana</div>
         </div>
     </div>
 
-    <div class="container">
-        <h3>Daftar Pembelian</h3>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Kode Barang</th>
-                    <th>Nama Barang</th>
-                    <th class="text-right">Harga (Rp)</th>
-                    <th class="text-right">Jumlah</th>
-                    <th class="text-right">Total (Rp)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $no = 1;
-                foreach ($beli as $item) {
-                    $total = $item['harga'] * $item['jumlah'];
-                    $grandtotal += $total;
-                    ?>
-                    <tr>
-                        <td><?php echo $no++; ?></td>
-                        <td><?php echo htmlspecialchars($item['kode']); ?></td>
-                        <td><?php echo htmlspecialchars($item['nama']); ?></td>
-                        <td class="text-right"><?php echo number_format($item['harga'], 0, ',', '.'); ?></td>
-                        <td class="text-right"><?php echo htmlspecialchars($item['jumlah']); ?></td>
-                        <td class="text-right"><?php echo number_format($total, 0, ',', '.'); ?></td>
-                    </tr>
-                    <?php
-                }
-                ?>
-                
-                <tr class="total-row">
-                    <td colspan="5" class="text-right">Total Belanja</td>
-                    <td class="text-right"><?php echo number_format($grandtotal, 0, ',', '.'); ?></td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="user-box" style="text-align:right;">
+        Selamat datang, <b><?= $username ?></b>! <br>
+        Role: <?= $role ?> <br><br>
+        <a href="logout.php" class="logout-btn" style="color:white; background:red; padding:7px 14px; border-radius:6px; text-decoration:none;">Logout</a>
     </div>
+</div>
+
+<div class="container">
+
+    <h3>Form Input Barang</h3>
+
+    <!-- FORM INPUT BARANG -->
+    <form method="POST">
+
+        <!-- PILIH KODE + NAMA BARANG -->
+        <select name="kode" onchange="this.form.submit()">
+            <option value="">-- Pilih Barang --</option>
+
+            <?php foreach ($data_barang as $kode => $brg): ?>
+                <option value="<?= $kode ?>" <?= $pilih_kode == $kode ? "selected" : "" ?>>
+                    <?= $kode . " - " . $brg['nama'] ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <!-- NAMA OTOMATIS -->
+        <input type="text" name="nama" placeholder="Nama Barang" value="<?= $nama_otomatis ?>" readonly>
+
+        <!-- HARGA OTOMATIS -->
+        <input type="number" name="harga" placeholder="Harga Barang" value="<?= $harga_otomatis ?>" readonly>
+
+        <!-- JUMLAH -->
+        <input type="number" name="jumlah" placeholder="Masukkan Jumlah" required>
+
+        <button class="btn-primary" type="submit" name="tambah">Tambahkan</button>
+        <button class="btn-secondary" type="reset">Batal</button>
+
+    </form>
+
+    <div class="center-title" style="text-align:center; font-weight:bold; margin-top:30px; font-size:19px;">
+        Daftar Pembelian
+    </div>
+
+    <!-- TABEL KERANJANG -->
+    <table>
+        <tr>
+            <th>Kode</th>
+            <th>Nama Barang</th>
+            <th>Harga</th>
+            <th>Jumlah</th>
+            <th>Total</th>
+        </tr>
+
+        <?php 
+        if (count($_SESSION['keranjang']) == 0): ?>
+            <tr><td colspan="5" style="text-align:center;">Keranjang masih kosong</td></tr>
+
+        <?php else: 
+            $total_belanja = 0;
+            foreach ($_SESSION['keranjang'] as $item):
+                $total_belanja += $item['total'];
+        ?>
+            <tr>
+                <td><?= $item['kode'] ?></td>
+                <td><?= $item['nama'] ?></td>
+                <td>Rp <?= number_format($item['harga'], 0, ',', '.') ?></td>
+                <td><?= $item['jumlah'] ?></td>
+                <td>Rp <?= number_format($item['total'], 0, ',', '.') ?></td>
+            </tr>
+        <?php endforeach; ?>
+
+        <?php
+            $diskon = $total_belanja * 0.05;
+            $total_bayar = $total_belanja - $diskon;
+        ?>
+
+            <tr class="total-row">
+                <td colspan="4" class="text-right">Total Belanja</td>
+                <td>Rp <?= number_format($total_belanja, 0, ',', '.') ?></td>
+            </tr>
+
+            <tr class="total-row">
+                <td colspan="4" class="text-right">Diskon (5%)</td>
+                <td>Rp <?= number_format($diskon, 0, ',', '.') ?></td>
+            </tr>
+
+            <tr class="total-row">
+                <td colspan="4" class="text-right">Total Bayar</td>
+                <td>Rp <?= number_format($total_bayar, 0, ',', '.') ?></td>
+            </tr>
+
+        <?php endif; ?>
+    </table>
+
+    <a href="dashboard.php?clear=1" class="btn-danger">Kosongkan Keranjang</a>
+</div>
+
 </body>
 </html>
